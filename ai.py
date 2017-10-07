@@ -3,7 +3,8 @@ from flask import Flask, request
 from structs import *
 from copy import deepcopy
 import json
-import numpy
+import numpy as np
+import astar
 
 
 app = Flask(__name__)
@@ -85,7 +86,7 @@ def bot():
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
 
-    #print(serialized_map.replace('],','],\n'))
+    print(serialized_map.replace('],','],\n'))
 
     #list of tiles
     wall_tiles = []
@@ -94,17 +95,53 @@ def bot():
     ressource_tiles = []
     shop_tiles = []
 
-    astar_array = [[0 for x in range(20)] for y in range(20)]
+    astar_array = np.array([[0 for k in range(20)] for l in range(20)])
 
     for i, row in enumerate(deserialized_map[:20]):
         for j, item in enumerate(row[:20]):
             if item.Content in [1,3,5]:  
                 astar_array[i][j] = 1
 
+            if item.Content == 4:
+                ressource_tiles.append((i,j))
+
     print(*astar_array,sep='\n')
 
+
+    
+    point_choisi = ressource_tiles[0]
+    #for p in ressource_tiles:
+       # if astar.heuristic(p, (x,y)) < min:
+            #point_choisi = p
+
+    print('start pos ', Point(x,y)) #absolue
+    pos_top_corner = (x - 10,y - 10)
+
+    print('Pos top ', pos_top_corner) #absolue
+    pos_dep_rel = (10,10)
+
+    pos_cible_rel = point_choisi
+    print('resource ', point_choisi)
+
+    pos_cible_abs = (point_choisi[0] + pos_top_corner[0], point_choisi[1] + pos_top_corner[1])
+    print('pos cible ', pos_cible_abs)
+
+    
+    path = astar.astar(astar_array,pos_cible_rel,pos_dep_rel)
+    if len(path) > 1:
+        prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
+        print('prochain dep ', prochain_dep)
+
+    print(path)
+
+
+    
+
+
+
+
     #find other players Contient des bugs
-    '''
+    
     otherPlayers = []
 
     for player_dict in map_json["OtherPlayers"]:
@@ -116,7 +153,7 @@ def bot():
                                      Point(p_pos["X"], p_pos["Y"]))
 
             otherPlayers.append({player_name: player_info })
-    '''
+    
 
     print('Wall')
     print(wall_tiles)
@@ -131,7 +168,11 @@ def bot():
 
     # return decision
     print('Fin du Main\n')
-    a = create_move_action(Point(x-1,y))
+    if len(path) > 1:
+        a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
+    else:
+        a = create_collect_action(Point(pos_cible_abs[0], pos_cible_abs[1]))
+        
     print(a)
     return a
 
