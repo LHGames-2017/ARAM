@@ -1,3 +1,4 @@
+from __future__ import print_function
 from flask import Flask, request
 from structs import *
 import json
@@ -34,7 +35,7 @@ def deserialize_map(serialized_map):
     serialized_map = serialized_map[1:]
     rows = serialized_map.split('[')
     column = rows[0].split('{')
-    deserialized_map = [[Tile() for x in range(40)] for y in range(40)]
+    deserialized_map = [[Tile() for x in range(20)] for y in range(20)]
     for i in range(len(rows) - 1):
         column = rows[i + 1].split('{')
 
@@ -67,21 +68,25 @@ def bot():
                     Point(house["X"], house["Y"]),
                     p["CarriedResources"], p["CarryingCapacity"])
 
-    print 'Player info'
-    print 'Position',pos
-    print 'house pos',house
-    print 
-    print 'Player'
-    print 'Pos', 'x:', x, 'y:', y
-    print 'health', p["Health"]
-    print 'maxhealth', p["MaxHealth"]
-    print 'ressources', p["CarriedResources"]
-    print 'capacity', p["CarryingCapacity"]
+    print('Player info')
+    print('Position',pos)
+    print('house pos',house)
+    print()
+    print('Player')
+    print('Pos', 'x:', x, 'y:', y)
+    print('health', p["Health"])
+    print('maxhealth', p["MaxHealth"])
+    print('ressources', p["CarriedResources"])
+    print('capacity', p["CarryingCapacity"])
 
     # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-    print 'map', serialized_map
+
+    for row in deserialized_map[:20]:
+        for item in row[:20]:
+            print (item.Content, end=", ")
+        print()
 
     otherPlayers = []
 
@@ -95,9 +100,12 @@ def bot():
 
             otherPlayers.append({player_name: player_info })
 
+    print('other players\n', otherPlayers)
     # return decision
     print('Fin du Main\n')
-    return create_move_action(Point(0,1))
+    a = create_move_action(Point(x+1,y))
+    print(a)
+    return a
 
 @app.route("/", methods=["POST"])
 def reponse():

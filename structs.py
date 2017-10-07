@@ -81,4 +81,5 @@ class ActionContent(object):
 
     def __init__(self, action_name, content):
         self.ActionName = action_name
-        self.Content = content
+        self.Content = str(content)
+        
