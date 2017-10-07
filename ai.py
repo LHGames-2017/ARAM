@@ -8,6 +8,8 @@ import astar
 
 
 app = Flask(__name__)
+niv = 0
+costs = [0, 15000, 50000, 100000, 250000, 500000]
 
 def create_action(action_type, target):
     actionContent = ActionContent(action_type, target.__dict__)
@@ -30,6 +32,9 @@ def create_heal_action():
 
 def create_purchase_action(item):
     return create_action("PurchaseAction", item)
+
+def create_upgrade_action(lvl):
+    return create_action("UpgradeAction", lvl)
 
 def deserialize_map(serialized_map):
     """
@@ -119,6 +124,14 @@ def bot():
     r = 0
 
     a = create_move_action(Point(x,y))
+
+
+    if x == p["HouseLocation"]["X"] and y == p["HouseLocation"]["Y"]:
+        if costs[niv] < p["Score"]:
+            a = create_upgrade_action(n)
+            
+
+
     if len(ressource_tiles) > 0 and p["CarriedResources"] < p["CarryingCapacity"]: #miner
         while not path and r < len(ressource_tiles):
             pos_cible_rel = ressource_tiles[r]
@@ -142,6 +155,7 @@ def bot():
         else:
             print("pas de chemin vers les ressources")
             a = create_move_action(Point(x-1,y))
+    
                 
     else: #rentrer chez nous
         cible_x = x
@@ -224,4 +238,4 @@ def reponse():
     return bot()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=3000)
