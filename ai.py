@@ -83,11 +83,15 @@ def bot():
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
 
+    print(serialized_map.replace('],','],\n'))
+
     for row in deserialized_map[:20]:
         for item in row[:20]:
             print (item.Content, end=", ")
         print()
 
+    #find other players Contient des bugs
+    '''
     otherPlayers = []
 
     for player_dict in map_json["OtherPlayers"]:
@@ -99,11 +103,46 @@ def bot():
                                      Point(p_pos["X"], p_pos["Y"]))
 
             otherPlayers.append({player_name: player_info })
+    '''
 
-    print('other players\n', otherPlayers)
+    #list of tiles
+    wall_tiles = []
+    house_tiles = []
+    lava_tiles = []
+    ressource_tiles = []
+    shop_tiles = []
+    for row in deserialized_map[:20]:
+        for item in row[:20]:
+            tile_type = item.Content
+            if tile_type == 1:
+                wall_tiles.append((item.X, item.Y))
+            elif tile_type == 2:
+                house_tiles.append((item.X, item.Y))
+            elif tile_type == 3:
+                lava_tiles.append((item.X, item.Y))
+            elif tile_type == 4:
+                ressource_tiles.append((item.X, item.Y))
+            elif tile_type == 5:
+                shop_tiles.append((item.X, item.Y))
+
+    print('Wall')
+    print(wall_tiles)
+    print('House')
+    print(house_tiles)
+    print('Lava')
+    print(lava_tiles)
+    print('Ressource')
+    print(ressource_tiles)
+    print('Shop')
+    print(shop_tiles)
+
+    #list of lavas
+    lava_tiles = []
+
+
     # return decision
     print('Fin du Main\n')
-    a = create_move_action(Point(x+1,y))
+    a = create_move_action(Point(x-1,y))
     print(a)
     return a
 
