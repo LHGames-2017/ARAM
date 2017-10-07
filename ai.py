@@ -141,22 +141,36 @@ def bot():
                 a = create_collect_action(Point(pos_cible_abs[0], pos_cible_abs[1]))
         else:
             print("pas de chemin vers les ressources")
-            a = create_move_action(Point(x,y))
+            a = create_move_action(Point(x-1,y))
                 
     else: #rentrer chez nous
+        cible_x = x
+        cible_y = y
+
         pos_cible_abs = p["HouseLocation"]
-        pos_cible_rel = (pos_cible_abs["X"] - 10, pos_cible_abs["Y"] - 10)
         print("CIBLE : ", pos_cible_abs)
 
-        while not path and r < len(house_tiles):
-            pos_cible_rel = house_tiles[r]
-            pos_cible_abs = (pos_cible_rel[0] + pos_top_corner[0], pos_cible_rel[1] + pos_top_corner[1])
-            print("CIBLE : ", pos_cible_abs)
+        if pos_cible_abs["X"] <= x + 10 and pos_cible_abs["X"] >= x - 10: 
+            cible_x = pos_cible_abs["X"]
 
-            path = astar.astar(astar_array_mais,pos_cible_rel,(10,10))
-            r += 1
+        elif pos_cible_abs["X"] > x + 10:
+            cible_x = x + 10
+        
+        else:
+            cible_x = x - 10
+            
 
-        if path:
+        if pos_cible_abs["Y"] <= y + 10 and pos_cible_abs["Y"] >= y - 10:
+            cible_y = pos_cible_abs["Y"]
+
+        elif pos_cible_abs["Y"] > y + 10:
+            cible_y = y + 10
+        
+        else:
+            cible_y = y - 10
+
+        path = astar.astar(astar_array_mais,(cible_x - x + 10,cible_y - y + 10),(10,10))
+        if path: #si maison dans champ de vision
             if len(path) > 1:
                 prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
                 a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
@@ -164,7 +178,7 @@ def bot():
                 print("LONG ", len(path))
                 print("maison!")
                 a = create_move_action(Point(pos_cible_abs["X"], pos_cible_abs["Y"]))
-     
+
 
         
     
