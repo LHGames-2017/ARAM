@@ -52,10 +52,10 @@ def bot():
     """
     Main de votre bot.
     """
+    print('debut du main')
     map_json = request.form["map"]
 
     # Player info
-
     encoded_map = map_json.encode()
     map_json = json.loads(encoded_map)
     p = map_json["Player"]
@@ -67,9 +67,21 @@ def bot():
                     Point(house["X"], house["Y"]),
                     p["CarriedResources"], p["CarryingCapacity"])
 
+    print 'Player info'
+    print 'Position',pos
+    print 'house pos',house
+    print 
+    print 'Player'
+    print 'Pos', 'x:', x, 'y:', y
+    print 'health', p["Health"]
+    print 'maxhealth', p["MaxHealth"]
+    print 'ressources', p["CarriedResources"]
+    print 'capacity', p["CarryingCapacity"]
+
     # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
+    print 'map', serialized_map
 
     otherPlayers = []
 
@@ -84,6 +96,7 @@ def bot():
             otherPlayers.append({player_name: player_info })
 
     # return decision
+    print('Fin du Main\n')
     return create_move_action(Point(0,1))
 
 @app.route("/", methods=["POST"])
