@@ -105,39 +105,55 @@ def bot():
             if item.Content == 4:
                 ressource_tiles.append((i,j))
 
+            if item.Content == 2:
+                house_tiles.append((i,j))
+
     print(*astar_array,sep='\n')
 
 
-    
-    point_choisi = ressource_tiles[0]
-    #for p in ressource_tiles:
-       # if astar.heuristic(p, (x,y)) < min:
-            #point_choisi = p
-
-    print('start pos ', Point(x,y)) #absolue
     pos_top_corner = (x - 10,y - 10)
+    path = False
+    r = 0
 
-    print('Pos top ', pos_top_corner) #absolue
-    pos_dep_rel = (10,10)
+    if len(ressource_tiles) > 0 and p["CarriedResources"] < p["CarryingCapacity"]:
+        while not path:
+            pos_cible_rel = ressource_tiles[r]
+            pos_cible_abs = (pos_cible_rel[0] + pos_top_corner[0], pos_cible_rel[1] + pos_top_corner[1])
+            print("CIBLE : ", pos_cible_abs)
 
-    pos_cible_rel = point_choisi
-    print('resource ', point_choisi)
+            path = astar.astar(astar_array,pos_cible_rel,(10,10))
+            r += 1
+            
+        if path:
+            if len(path) > 1:
+                prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
+                a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
+            else:
+                a = create_collect_action(Point(pos_cible_abs[0], pos_cible_abs[1]))
+        else:
+            print("pas de chemin vers les ressources")
+            a = create_move_action(Point(x,y))
+            
+        
+    else: #rentrer chez nous
+        pos_cible_abs = p["HouseLocation"]
+        pos_cible_rel = house_tiles[0]
+        print("CIBLE : ", pos_cible_abs)
 
-    pos_cible_abs = (point_choisi[0] + pos_top_corner[0], point_choisi[1] + pos_top_corner[1])
-    print('pos cible ', pos_cible_abs)
+        path = astar.astar(astar_array,pos_cible_rel,(10,10))
 
+        if path:
+            if len(path) > 1:
+                prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
+                a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
+        else:
+            print("pas de chemin vers la maison")
+            a = create_move_action(Point(x,y))
+     
+
+        
     
-    path = astar.astar(astar_array,pos_cible_rel,pos_dep_rel)
-    if len(path) > 1:
-        prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
-        print('prochain dep ', prochain_dep)
-
     print(path)
-
-
-    
-
-
 
 
     #find other players Contient des bugs
@@ -167,12 +183,7 @@ def bot():
     print(shop_tiles)
 
     # return decision
-    print('Fin du Main\n')
-    if len(path) > 1:
-        a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
-    else:
-        a = create_collect_action(Point(pos_cible_abs[0], pos_cible_abs[1]))
-        
+    print('Fin du Main\n')       
     print(a)
     return a
 
