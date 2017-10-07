@@ -1,8 +1,10 @@
 from __future__ import print_function
 from flask import Flask, request
 from structs import *
+from copy import deepcopy
 import json
 import numpy
+
 
 app = Flask(__name__)
 
@@ -83,12 +85,23 @@ def bot():
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
 
-    print(serialized_map.replace('],','],\n'))
+    #print(serialized_map.replace('],','],\n'))
 
-    for row in deserialized_map[:20]:
-        for item in row[:20]:
-            print (item.Content, end=", ")
-        print()
+    #list of tiles
+    wall_tiles = []
+    house_tiles = []
+    lava_tiles = []
+    ressource_tiles = []
+    shop_tiles = []
+
+    astar_array = [[0 for x in range(20)] for y in range(20)]
+
+    for i, row in enumerate(deserialized_map[:20]):
+        for j, item in enumerate(row[:20]):
+            if item.Content in [1,3,5]:  
+                astar_array[i][j] = 1
+
+    print(*astar_array,sep='\n')
 
     #find other players Contient des bugs
     '''
@@ -105,26 +118,6 @@ def bot():
             otherPlayers.append({player_name: player_info })
     '''
 
-    #list of tiles
-    wall_tiles = []
-    house_tiles = []
-    lava_tiles = []
-    ressource_tiles = []
-    shop_tiles = []
-    for row in deserialized_map[:20]:
-        for item in row[:20]:
-            tile_type = item.Content
-            if tile_type == 1:
-                wall_tiles.append((item.X, item.Y))
-            elif tile_type == 2:
-                house_tiles.append((item.X, item.Y))
-            elif tile_type == 3:
-                lava_tiles.append((item.X, item.Y))
-            elif tile_type == 4:
-                ressource_tiles.append((item.X, item.Y))
-            elif tile_type == 5:
-                shop_tiles.append((item.X, item.Y))
-
     print('Wall')
     print(wall_tiles)
     print('House')
@@ -135,10 +128,6 @@ def bot():
     print(ressource_tiles)
     print('Shop')
     print(shop_tiles)
-
-    #list of lavas
-    lava_tiles = []
-
 
     # return decision
     print('Fin du Main\n')
