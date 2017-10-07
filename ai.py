@@ -68,7 +68,7 @@ def bot():
     y = pos["Y"]
     house = p["HouseLocation"]
     player = Player(p["Health"], p["MaxHealth"], Point(x,y),
-                    Point(house["X"], house["Y"]),
+                    Point(house["X"], house["Y"]), p["Score"],
                     p["CarriedResources"], p["CarryingCapacity"])
 
     print('Player info')
@@ -81,7 +81,7 @@ def bot():
     print('maxhealth', p["MaxHealth"])
     print('ressources', p["CarriedResources"])
     print('capacity', p["CarryingCapacity"])
-
+    print('Score', p["Score"])
     # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
@@ -120,7 +120,7 @@ def bot():
 
     a = create_move_action(Point(x,y))
     if len(ressource_tiles) > 0 and p["CarriedResources"] < p["CarryingCapacity"]: #miner
-        while not path:
+        while not path and r < len(ressource_tiles):
             pos_cible_rel = ressource_tiles[r]
             pos_cible_abs = (pos_cible_rel[0] + pos_top_corner[0], pos_cible_rel[1] + pos_top_corner[1])
             print("CIBLE : ", pos_cible_abs)
@@ -145,10 +145,16 @@ def bot():
                 
     else: #rentrer chez nous
         pos_cible_abs = p["HouseLocation"]
-        pos_cible_rel = house_tiles[0]
+        pos_cible_rel = (pos_cible_abs["X"] - 10, pos_cible_abs["Y"] - 10)
         print("CIBLE : ", pos_cible_abs)
 
-        path = astar.astar(astar_array_mais,pos_cible_rel,(10,10))
+        while not path and r < len(house_tiles):
+            pos_cible_rel = house_tiles[r]
+            pos_cible_abs = (pos_cible_rel[0] + pos_top_corner[0], pos_cible_rel[1] + pos_top_corner[1])
+            print("CIBLE : ", pos_cible_abs)
+
+            path = astar.astar(astar_array_mais,pos_cible_rel,(10,10))
+            r += 1
 
         if path:
             if len(path) > 1:
