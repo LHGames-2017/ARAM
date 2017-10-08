@@ -8,6 +8,8 @@ import astar
 
 
 app = Flask(__name__)
+
+#Pour le upgrade_action
 niv = 0
 costs = [0, 15000, 50000, 100000, 250000, 500000]
 
@@ -33,6 +35,7 @@ def create_heal_action():
 def create_purchase_action(item):
     return create_action("PurchaseAction", item)
 
+#tentative de upgrade, mais on ne sait pas trop comment l'implémenter
 def create_upgrade_action(lvl):
     return create_action("UpgradeAction", lvl)
 
@@ -76,6 +79,7 @@ def bot():
                     Point(house["X"], house["Y"]), p["Score"],
                     p["CarriedResources"], p["CarryingCapacity"])
 
+    #Informations affichées à chaque boucle
     print('Player info')
     print('Position',pos)
     print('house pos',house)
@@ -87,10 +91,12 @@ def bot():
     print('ressources', p["CarriedResources"])
     print('capacity', p["CarryingCapacity"])
     print('Score', p["Score"])
+
     # Map
     serialized_map = map_json["CustomSerializedMap"]
     deserialized_map = deserialize_map(serialized_map)
-
+    
+    #Print map
     print(serialized_map.replace('],','],\n'))
 
     #list of tiles
@@ -99,10 +105,14 @@ def bot():
     lava_tiles = []
     ressource_tiles = []
     shop_tiles = []
-
+    
+    #2 arrays pour le pathfinding :
+    #astar_array_res = pour les ressources
+    #astar_array_mais = pour pas que le trajet de retour soit bloqué vers les ressources
     astar_array_res = np.array([[0 for k in range(20)] for l in range(20)])
     astar_array_mais = np.array([[0 for k in range(20)] for l in range(20)])
 
+    #Construire les maps pour le pathfinding qui doivent être composées de 1 (murs) ou de 0 (cases vides)
     for i, row in enumerate(deserialized_map[:20]):
         for j, item in enumerate(row[:20]):
             if item.Content in [1,3,5]:  
@@ -116,64 +126,77 @@ def bot():
             if item.Content == 2:
                 house_tiles.append((i,j))
 
+    #imprimer le tableau de déplacements possibles
     print(*astar_array_mais,sep='\n')
-
-
+    
+    #position du coin droit de la vue
     pos_top_corner = (x - 10,y - 10)
     path = False
+    
+    #ressources possibles à miner
     r = 0
-
+    #action de base (si jamais on peut rien faire, on fait rien)
     a = create_move_action(Point(x,y))
-
-
+    
+    #Si on est chez nous et on peut upgrader, on le fait
     if x == p["HouseLocation"]["X"] and y == p["HouseLocation"]["Y"]:
         if costs[niv] < p["Score"]:
             a = create_upgrade_action(n)
-            
 
-
-    if len(ressource_tiles) > 0 and p["CarriedResources"] < p["CarryingCapacity"]: #miner
+    #Si on veut miner (il faut une ressource et de la capacité de transport)
+    if len(ressource_tiles) > 0 and p["CarriedResources"] < p["CarryingCapacity"]:
         while not path and r < len(ressource_tiles):
+            #position cible dans la vue
             pos_cible_rel = ressource_tiles[r]
+            #position cible dans le monde
             pos_cible_abs = (pos_cible_rel[0] + pos_top_corner[0], pos_cible_rel[1] + pos_top_corner[1])
             print("CIBLE : ", pos_cible_abs)
-
+            #trouver le chemin
             path = astar.astar(astar_array_res,pos_cible_rel,(10,10))
+            #pour passer à la prochaine ressource si jamais on en a pas trouvé
             r += 1
-            
+        #si on a trouvé un chemin    
         if path:
             print("il y a un chemin")
+            #si on est à une case ou il faut au moins un déplc (pas adjacente)
             if len(path) > 1:
+                #vérifier le chemin
                 print("PATH: ", path)
+                #prochain déplacement
                 prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
                 print("prochain depl ", prochain_dep)
+                #bouger
                 a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
+            #si on est à côté
             else:
-                print("LONG ", len(path))
+                #on veut collecter
                 print("collect")
+                #collecter
                 a = create_collect_action(Point(pos_cible_abs[0], pos_cible_abs[1]))
         else:
             print("pas de chemin vers les ressources")
+            #sinon, on a pas trouvé de chemin vers les ressources, on fait juste un depl n'importe ou
             a = create_move_action(Point(x-1,y))
     
-                
-    else: #rentrer chez nous
+    #si on a plus de place dans l'inventaire ou qu'il n'y a plus de ressources, on rentre         
+    else: 
         cible_x = x
         cible_y = y
 
+        #position de la maison dans le monde
         pos_cible_abs = p["HouseLocation"]
         print("CIBLE : ", pos_cible_abs)
 
+        #si x est dans notre champ, on vas vers x
         if pos_cible_abs["X"] <= x + 10 and pos_cible_abs["X"] >= x - 10: 
             cible_x = pos_cible_abs["X"]
-
+        #sinon on va au x le plus proche
         elif pos_cible_abs["X"] > x + 10:
             cible_x = x + 10
-        
         else:
             cible_x = x - 10
             
-
+        #même chose pour y
         if pos_cible_abs["Y"] <= y + 10 and pos_cible_abs["Y"] >= y - 10:
             cible_y = pos_cible_abs["Y"]
 
@@ -183,23 +206,24 @@ def bot():
         else:
             cible_y = y - 10
 
+        #on va vers la cible qu'on a trouvé en la convertissant en position de la vue
         path = astar.astar(astar_array_mais,(cible_x - x + 10,cible_y - y + 10),(10,10))
-        if path: #si maison dans champ de vision
+        
+        #si on trouve un chemin
+        if path:
+            #si on est pas à côté
             if len(path) > 1:
                 prochain_dep = Point(path[1][0] - 10, path[1][1] - 10)
                 a = create_move_action(Point(x + prochain_dep.X, y + prochain_dep.Y))
+            #sinon on va à la position de la maison (on est à coté donc le depl est valide)
             else:
                 print("LONG ", len(path))
                 print("maison!")
                 a = create_move_action(Point(pos_cible_abs["X"], pos_cible_abs["Y"]))
 
 
-        
-    
-    print(path)
 
-
-    #find other players Contient des bugs
+    #find other players Contient des bugs et on en a pas besoin
     """
     otherPlayers = []
 
@@ -227,6 +251,7 @@ def bot():
 
     # return decision
     print('Fin du Main\n')
+    #montre l'action pour qu'on sache ce qu'il fait
     print(a)
     return a
 
